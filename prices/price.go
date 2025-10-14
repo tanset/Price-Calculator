@@ -1,54 +1,35 @@
 package prices
 
 import (
-	"bufio"
 	"fmt"
-	"os"
 
 	"github.com/tanset/Price-Calculator/conversion"
+	"github.com/tanset/Price-Calculator/filemanager"
 )
 
 type TaxIncludedPriceJob struct {
-	TaxRate float64
-	InputPrices []float64
-	TaxIncludedPrices map[string]float64
+	IOManager filemanager.FileManager `json:"-"`
+	TaxRate float64 `json:"tax_rate"`
+	InputPrices []float64 `json:"input_price"`
+	TaxIncludedPrices map[string]string `json:"tax_included_prices"`
 }
 
 func (job *TaxIncludedPriceJob) LoadData(){
-	file, err := os.Open("prices.txt")
+	lines, err := job.IOManager.ReadLine()
 
-	if err != nil{
-		fmt.Println("Could not open file!")
-		fmt.Println(err)
-		return
-	}
-
-	scanner := bufio.NewScanner(file)
-
-	var lines []string
-
-	for scanner.Scan() {
-		lines = append(lines, scanner.Text())
-	}
-
-	err = scanner.Err()
 	if err != nil {
-		fmt.Println("Reading the file content failed.")
 		fmt.Println(err)
-		file.Close()
 		return 
-	}
+	}	
 
 	prices, err := conversion.StringToFloats(lines)
+
 	if err != nil {
 		fmt.Println(err)
-		file.Close()
 		return 
 	}
 
-
 	job.InputPrices = prices
-	file.Close()
 }
 
 func (job *TaxIncludedPriceJob) Process() {
@@ -60,11 +41,14 @@ func (job *TaxIncludedPriceJob) Process() {
 		result[fmt.Sprintf("%.2f", price)] = fmt.Sprintf("%.2f", taxIncludedPrice)
 	}
 
-	fmt.Println(result)
+	job.TaxIncludedPrices = result
+	job.IOManager.WriteResult(job)
+
 }
 
-func NewTaxIncludedPriceJob(taxRate float64) *TaxIncludedPriceJob {
+func NewTaxIncludedPriceJob(fm filemanager.FileManager, taxRate float64) *TaxIncludedPriceJob {
 	return &TaxIncludedPriceJob{
+		IOManager: fm,
 		InputPrices: []float64{10, 20, 30},
 		TaxRate: taxRate,
 	}

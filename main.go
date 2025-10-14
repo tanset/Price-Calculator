@@ -1,6 +1,9 @@
 package main
 
 import (
+	"fmt"
+
+	"github.com/tanset/Price-Calculator/filemanager"
 	"github.com/tanset/Price-Calculator/prices"
 )
 func main(){
@@ -8,7 +11,8 @@ func main(){
 
 
 	for _, taxRate := range taxRates{
-		priceJob := prices.NewTaxIncludedPriceJob(taxRate)
+		fm := filemanager.New("prices.txt", fmt.Sprintf("result_%.0f.json", taxRate * 100))
+		priceJob := prices.NewTaxIncludedPriceJob(fm, taxRate)
 		priceJob.Process()
 	}
 }
